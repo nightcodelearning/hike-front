@@ -1,4 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { environment } from 'src/environments/environment';
+import {CognitoUserAttribute, CognitoUserPool} from 'amazon-cognito-identity-js';
+import { Iuser } from '../models/iuser';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-signup',
@@ -13,12 +17,49 @@ nickname: string;
 password: string;
 
 
-  constructor() { }
+  constructor( private router: Router) { }
 
   ngOnInit(): void {
   }
 
   onRegister(): void{
+    var poolData = {
+      UserPoolId: environment.UserPoolId, // Your user pool id here
+      ClientId: environment.ClientId, // Your client id here
+    };
+
+    var userpool = new CognitoUserPool(poolData);
+    // set attributes
+    var attrList = [];
+    var iuser:Iuser = {
+      email: this.email,
+      given_name : this.givenName,
+      nickname : this.nickname
+    }
+
+    for(let key in iuser){
+      var attrData = {
+        Name: key,
+        Value: iuser[key]
+      }
+      var attr = new CognitoUserAttribute(attrData);
+
+    attrList.push(attr);
+
+    }
+
+    userpool.signUp(this.email,this.password,attrList,[],(err,result)=>{
+      if(err){
+        alert(err.message||JSON.stringify(err))
+        return;
+      }
+      var newUser= result.user;
+      console.log(JSON.stringify(newUser));
+      alert("hemos enviado un correo de verificación");
+      this.router.navigate(['/login']);
+
+    } );
+
 
   }
 
